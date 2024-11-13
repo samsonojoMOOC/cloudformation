@@ -79,7 +79,7 @@ Resources:
         - Key: Name
           Value: DataPrivateSubnet2B
 
-#============This is where the error is trying to DEPLOY IGW and ROUTING======
+#============This is where the error is while trying to DEPLOY IGW and ROUTING======
 # Internet Gateway IGW
   InternetGateway:
     Type: 'AWS::EC2::InternetGateway'
@@ -121,9 +121,10 @@ Resources:
       SubnetId: !Ref PublicSubnet1A
       RouteTableId: !Ref PublicRouteTable
            
+           
  
 # Bastion Host
-  BastionHostOnA1:
+  BastionHostOn1A:
     Type: 'AWS::EC2::Instance'
     Properties:
       InstanceType: t2.micro
@@ -134,7 +135,7 @@ Resources:
         - !Ref BastionSG
       Tags:
         - Key: Name
-          Value: BastionHostOnA1
+          Value: BastionHostOn1A
 
 # Security Group
   BastionSG:
@@ -146,4 +147,56 @@ Resources:
         - IpProtocol: tcp
           FromPort: 22
           ToPort: 22
-          CidrIp: 102.88.33.218/32
+          CidrIp: 102.89.47.122/32
+
+#==========================start another sets=====================
+#AppInstance1A 
+  AppInstanceOn1A:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      InstanceType: t2.micro
+      KeyName: bastionKp
+      ImageId: ami-06b21ccaeff8cd686
+      SubnetId: !Ref AppPrivateSubnet1A
+      SecurityGroupIds:
+        - !Ref AppInstanceOn1ASG
+      Tags:
+        - Key: Name
+          Value: AppInstanceOn1A
+
+#AppInstance1ASG
+  AppInstanceOn1ASG:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: 'Allows SSH from Bastion Host'
+      VpcId: !Ref MyVPC
+      SecurityGroupIngress:
+           - IpProtocol: tcp
+             FromPort: 22
+             ToPort: 22
+             SourceSecurityGroupId: !Ref BastionSG
+            
+#AppInstance2B 
+  AppInstanceOn2B:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      InstanceType: t2.micro
+      ImageId: ami-06b21ccaeff8cd686
+      SubnetId: !Ref AppPrivateSubnet2B
+      SecurityGroupIds:
+        - !Ref AppInstanceOn2BSG
+      Tags:
+        - Key: Name
+          Value: AppInstanceOn2B
+
+#AppInstance2BSG
+  AppInstanceOn2BSG:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: 'Enable ICMP ping from App1'
+      VpcId: !Ref MyVPC
+      SecurityGroupIngress:
+           - IpProtocol: icmp #ping
+             FromPort: -1 #from all connection
+             ToPort: -1 #from all connection
+             SourceSecurityGroupId: !Ref AppInstanceOn1ASG
